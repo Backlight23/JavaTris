@@ -7,6 +7,7 @@ import com.aquip.tetris.input.GameInput;
 import com.aquip.tetris.input.PlayerInput;
 import com.aquip.tetris.player.Player;
 import com.aquip.tetris.state.MatchState;
+import com.aquip.tetris.state.PlayerState;
 
 import java.util.*;
 
@@ -17,6 +18,7 @@ public class PlanningAI implements AIController {
     private final InputPlanner planner;
 
     private final Queue<GameInput> inputQueue = new ArrayDeque<>();
+    private String currentPlanKey;
 
     public PlanningAI(FutureStateGenerator generator,
                       EvaluationFunction evaluator,
@@ -31,6 +33,20 @@ public class PlanningAI implements AIController {
 
         PlayerInput input = new PlayerInput();
         input.player = player;
+        input.inputs = Collections.emptySet();
+
+        PlayerState playerState = state == null ? null : state.getPlayerState(player);
+        if (playerState == null || !playerState.status.alive || !playerState.piece.hasPiece()) {
+            inputQueue.clear();
+            currentPlanKey = null;
+            return input;
+        }
+
+        String planKey = buildPlanKey(playerState);
+        if (!planKey.equals(currentPlanKey)) {
+            inputQueue.clear();
+            currentPlanKey = planKey;
+        }
 
         // If we have no planned inputs, compute a new plan
         if (inputQueue.isEmpty()) {
@@ -42,8 +58,6 @@ public class PlanningAI implements AIController {
 
         if (next != null) {
             input.inputs = Set.of(next);
-        } else {
-            input.inputs = Collections.emptySet();
         }
 
         return input;
@@ -80,5 +94,10 @@ public class PlanningAI implements AIController {
             inputQueue.clear();
             inputQueue.addAll(plannedInputs);
         }
+    }
+
+    private String buildPlanKey(PlayerState playerState) {
+        var piece = playerState.piece.currentPiece;
+        return piece.type + ":" + playerState.time.amount() + ":" + playerState.next.canHold + ":" + playerState.next.held;
     }
 }

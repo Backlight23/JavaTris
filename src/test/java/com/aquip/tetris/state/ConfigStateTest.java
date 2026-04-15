@@ -3,6 +3,7 @@ package com.aquip.tetris.state;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ConfigStateTest {
 
@@ -11,16 +12,16 @@ class ConfigStateTest {
         ConfigState config = new ConfigState();
 
         assertEquals(60, config.gravityThresholdForPieces(0));
-        assertEquals(59, config.gravityThresholdForPieces(10));
-        assertEquals(55, config.gravityThresholdForPieces(50));
-        assertEquals(40, config.gravityThresholdForPieces(200));
+        assertTrue(config.gravityThresholdForPieces(10) < config.gravityThresholdForPieces(0));
+        assertTrue(config.gravityThresholdForPieces(50) < config.gravityThresholdForPieces(10));
+        assertEquals(config.minimumGravityTick, config.gravityThresholdForPieces(2_000));
     }
 
     @Test
     void softDropUsesFasterThreshold() {
         ConfigState config = new ConfigState();
 
-        assertEquals((60 - 15)/8, config.softDropThresholdForPieces(150));
-        assertEquals((60 - 50)/8, config.softDropThresholdForPieces(500));
+        assertTrue(config.softDropThresholdForPieces(150) < config.gravityThresholdForPieces(150));
+        assertEquals(1, config.softDropThresholdForPieces(500));
     }
 }

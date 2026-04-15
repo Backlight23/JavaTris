@@ -1,6 +1,6 @@
 package com.aquip.tetris.input;
 
-import com.aquip.tetris.menu.MenuInput;
+import com.aquip.tetris.ui.menu.MenuInput;
 
 import javax.swing.*;
 import java.awt.event.KeyEvent;

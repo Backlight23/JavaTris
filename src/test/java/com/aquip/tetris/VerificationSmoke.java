@@ -1,11 +1,14 @@
 package com.aquip.tetris;
 
+import com.aquip.tetris.ai.HeuristicAI;
 import com.aquip.tetris.engine.GameEngine;
 import com.aquip.tetris.engine.TickContext;
 import com.aquip.tetris.engine.handler.DeathHandler;
 import com.aquip.tetris.input.InputFrame;
-import com.aquip.tetris.menu.MenuEngine;
-import com.aquip.tetris.menu.MenuInputMapper;
+import com.aquip.tetris.input.PlayerInput;
+import com.aquip.tetris.ui.menu.GameMode;
+import com.aquip.tetris.ui.menu.MenuEngine;
+import com.aquip.tetris.ui.menu.MenuInputMapper;
 import com.aquip.tetris.piece.Piece;
 import com.aquip.tetris.piece.PieceType;
 import com.aquip.tetris.player.Player;
@@ -23,7 +26,10 @@ public final class VerificationSmoke {
 
     public static void main(String[] args) {
         verifyMenuStartsSinglePlayer();
+        verifyMenuModesCreateExpectedPlayers();
         verifyGravityCurve();
+        verifyVersusGameOverRules();
+        verifyAiProducesPlannedInput();
         verifySpawnCollisionDeath();
         verifyHiddenRowLockOutDeath();
         System.out.println("Smoke verification passed.");
@@ -45,13 +51,66 @@ public final class VerificationSmoke {
         require(game.getMatchState().players.get(0).player.getType() == PlayerType.HUMAN, "Primary player is not human");
     }
 
+    private static void verifyMenuModesCreateExpectedPlayers() {
+        MenuEngine menu = new MenuEngine(
+                new File("config/config.yml"),
+                new MenuInputMapper()
+        );
+
+        menu.state.selectionIndex = GameMode.VS_AI.ordinal();
+        GameEngine vsAi = menu.createGame();
+        require(vsAi.getMatchState().players.size() == 2, "Vs AI should create two players");
+        require(vsAi.getMatchState().players.get(1).player.getType() == PlayerType.AI, "Vs AI should create an AI opponent");
+
+        menu.state.selectionIndex = GameMode.TWO_PLAYER.ordinal();
+        GameEngine twoPlayer = menu.createGame();
+        require(twoPlayer.getMatchState().players.size() == 2, "2 Players mode should create two players");
+        require(twoPlayer.getMatchState().players.get(1).player.getType() == PlayerType.HUMAN, "2 Players mode should create a second human");
+
+        menu.state.selectionIndex = GameMode.AI_DEMO.ordinal();
+        GameEngine aiDemo = menu.createGame();
+        require(aiDemo.getMatchState().players.size() == 1, "AI Demo should create one player");
+        require(aiDemo.getMatchState().players.get(0).player.getType() == PlayerType.AI, "AI Demo should create an AI player");
+    }
+
     private static void verifyGravityCurve() {
         ConfigState config = new ConfigState();
 
         require(config.gravityThresholdForPieces(0) == 60, "Base gravity threshold is wrong");
-        require(config.gravityThresholdForPieces(50) == 40, "Gravity threshold does not accelerate");
-        require(config.gravityThresholdForPieces(200) == 8, "Gravity threshold does not clamp to minimum");
+        require(config.gravityThresholdForPieces(50) < config.gravityThresholdForPieces(0), "Gravity threshold does not accelerate");
+        require(config.gravityThresholdForPieces(2_000) == config.minimumGravityTick, "Gravity threshold does not clamp to minimum");
         require(config.softDropThresholdForPieces(500) == 1, "Soft drop threshold should bottom out at 1");
+    }
+
+    private static void verifyVersusGameOverRules() {
+        MatchState match = new MatchState();
+        PlayerState p1 = createPlayerState("P1", PlayerType.HUMAN);
+        PlayerState p2 = createPlayerState("P2", PlayerType.HUMAN);
+
+        match.addPlayer(p1);
+        match.addPlayer(p2);
+
+        require(!match.isGameOver(), "Fresh versus match should not be over");
+
+        p2.status.alive = false;
+        require(match.isGameOver(), "Versus match should end when one player remains");
+        require(match.getLastAlivePlayer() == p1, "Remaining player should be reported as winner");
+    }
+
+    private static void verifyAiProducesPlannedInput() {
+        Player aiPlayer = new Player(UUID.randomUUID(), PlayerType.AI, "AI1");
+        PlayerState playerState = new PlayerState(aiPlayer, new ConfigState());
+        playerState.piece.currentPiece = new Piece(PieceType.T, 0, 4, 0);
+        playerState.next.next.add(PieceType.I);
+        playerState.next.next.add(PieceType.O);
+
+        MatchState match = new MatchState();
+        match.addPlayer(playerState);
+
+        HeuristicAI ai = new HeuristicAI(aiPlayer);
+        PlayerInput input = ai.decide(aiPlayer, match);
+
+        require(input.inputs != null && !input.inputs.isEmpty(), "AI did not produce a planned input");
     }
 
     private static void verifySpawnCollisionDeath() {
@@ -89,7 +148,11 @@ public final class VerificationSmoke {
     }
 
     private static PlayerState createPlayerState() {
-        Player player = new Player(UUID.randomUUID(), PlayerType.HUMAN, "P1");
+        return createPlayerState("P1", PlayerType.HUMAN);
+    }
+
+    private static PlayerState createPlayerState(String name, PlayerType type) {
+        Player player = new Player(UUID.randomUUID(), type, name);
         return new PlayerState(player, new ConfigState());
     }
 

@@ -31,7 +31,7 @@ public class GameFactory {
             if (player.getType() == PlayerType.HUMAN) {
                 source = new HumanInputSource(player);
             } else {
-                source = new AIInputSource(player, new HeuristicAI());
+                source = new AIInputSource(player, new HeuristicAI(player));
             }
 
             inputSources.add(source);

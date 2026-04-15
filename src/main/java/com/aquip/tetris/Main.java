@@ -4,10 +4,10 @@ import com.aquip.tetris.engine.GameEngine;
 import com.aquip.tetris.input.InputFrame;
 import com.aquip.tetris.input.InputSource;
 import com.aquip.tetris.input.SwingInputSource;
-import com.aquip.tetris.menu.MenuEngine;
-import com.aquip.tetris.menu.MenuInputMapper;
-import com.aquip.tetris.menu.MenuPanel;
-import com.aquip.tetris.renderer.GamePanel;
+import com.aquip.tetris.ui.game.GamePanel;
+import com.aquip.tetris.ui.menu.MenuEngine;
+import com.aquip.tetris.ui.menu.MenuInputMapper;
+import com.aquip.tetris.ui.menu.MenuPanel;
 
 import javax.swing.*;
 import java.io.File;
@@ -18,7 +18,7 @@ public class Main {
     public static void main(String[] args) {
 
         JFrame frame = new JFrame("Tetris");
-        frame.setSize(800, 600);
+        frame.setSize(1280, 720);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         MenuPanel menuPanel = new MenuPanel();
@@ -35,6 +35,7 @@ public class Main {
                 new File("config/config.yml"),
                 new MenuInputMapper()
         );
+        menuPanel.setState(menu.state);
 
         GameEngine game = null;
 
@@ -50,6 +51,7 @@ public class Main {
                 menuPanel.repaint();
 
                 if (game != null) {
+                    gamePanel.setState(game.getMatchState());
                     frame.setContentPane(gamePanel);
                     frame.revalidate();
                     frame.repaint();

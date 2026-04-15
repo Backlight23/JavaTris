@@ -30,13 +30,39 @@ public class MatchState {
         players.add(player);
     }
 
-    public boolean isGameOver() {
+    public int aliveCount() {
+        int alive = 0;
         for (PlayerState player : players) {
             if (player.status.alive) {
-                return false;
+                alive++;
             }
         }
-        return !players.isEmpty();
+        return alive;
+    }
+
+    public PlayerState getLastAlivePlayer() {
+        PlayerState remaining = null;
+        for (PlayerState player : players) {
+            if (!player.status.alive) {
+                continue;
+            }
+
+            if (remaining != null) {
+                return null;
+            }
+
+            remaining = player;
+        }
+        return remaining;
+    }
+
+    public boolean isGameOver() {
+        if (players.isEmpty()) {
+            return false;
+        }
+
+        int alive = aliveCount();
+        return singlePlayer() ? alive == 0 : alive <= 1;
     }
 
     public PlayerState getPlayerState(Player player) {
