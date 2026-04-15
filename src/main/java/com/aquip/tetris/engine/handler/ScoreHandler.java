@@ -34,6 +34,7 @@ public class ScoreHandler implements PlayerHandler {
         // =====================
         // 2. B2B (Back-to-Back)
         // =====================
+        //System.out.println(key);
         if (isB2BEligible(key)) {
             player.b2b.currentB2B.add(result);
         } else if (result.lines > 0) {
@@ -68,6 +69,9 @@ public class ScoreHandler implements PlayerHandler {
     }
 
     private boolean isB2BEligible(PlaceKey key) {
-        return key.spin != SpinResult.NONE || key.lines == 4;
+        boolean tetris = key.lines == 4;
+        boolean spin = key.spin != SpinResult.NONE;
+
+        return spin || tetris;
     }
 }

@@ -13,42 +13,61 @@ public class LockHandler implements PlayerHandler {
         var ctx = context.get(player);
         var lock = player.lock;
         var config = player.config;
-        //System.out.println(ctx.pieceGrounded);
-        boolean grounded = ctx.pieceGrounded;
+
+        System.out.println(lock.lockTicks);
 
         if (ctx.hardDrop) {
             ctx.pieceLocked = true;
             return;
         }
 
-        if (!grounded) {
-            lock.lockTicks = 0;
-            return;
+        boolean grounded = ctx.pieceGrounded;
+
+        // =====================
+        // 1. Track lowest Y reached
+        // =====================
+        int currentY = player.piece.currentPiece.y;
+
+        if (currentY > lock.lowestY) {
+            lock.lowestY = currentY;
+
+            lock.softReset();
         }
+
+        // =====================
+        // 2. Detect "attempts" (not just successful moves)
+        // =====================
+        boolean attemptedMove = ctx.moveX != 0;
+        boolean attemptedRotate = ctx.rotation != 0;
 
         boolean reset = false;
 
-        if (ctx.pieceMoved) {
+        if (grounded) {
 
-            if (ctx.moveX != 0 && lock.slides < config.maxSlides) {
+            // Slide attempts
+            if (attemptedMove && lock.slides < config.maxSlides) {
                 lock.slides++;
                 reset = true;
             }
 
-            if (ctx.rotation != 0 && lock.rotations < config.maxRotations) {
+            // Rotation attempts
+            if (attemptedRotate && lock.rotations < config.maxRotations) {
                 lock.rotations++;
                 reset = true;
             }
+        }
+
+        // =====================
+        // 3. Lock timer behavior
+        // =====================
+        if (!grounded) {
+            return;
         }
 
         if (reset) {
             lock.lockTicks = 0;
         } else {
             lock.lockTicks++;
-        }
-
-        if (lock.lockTicks >= config.lockTick) {
-            ctx.pieceLocked = true;
         }
 
         // =====================
@@ -59,10 +78,10 @@ public class LockHandler implements PlayerHandler {
         }
     }
 
-    private void resetLock(com.aquip.tetris.state.LockState lock) {
+    public static void resetLock(com.aquip.tetris.state.LockState lock, int spawnY) {
         lock.lockTicks = 0;
         lock.slides = 0;
         lock.rotations = 0;
-        lock.hardDrop = false;
+        lock.lowestY = spawnY;
     }
 }

@@ -36,6 +36,11 @@ public class QueueHandler {
                 spawnNext(player);
             }
 
+            // reset movecontext
+            if (ctx.pieceSpawned) {
+                ctx.resetPiece();
+            }
+
             // =====================
             // 3. MAINTAIN QUEUE
             // =====================

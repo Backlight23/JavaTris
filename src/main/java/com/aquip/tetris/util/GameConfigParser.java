@@ -36,7 +36,7 @@ public class GameConfigParser {
             config.useBag = (boolean) data.getOrDefault("useBag", true);
 
             // =====================
-            // TABLES (NEW)
+            // TABLES
             // =====================
             GameTableParser tableParser = new GameTableParser();
 

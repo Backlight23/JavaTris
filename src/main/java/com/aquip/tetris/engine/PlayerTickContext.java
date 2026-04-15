@@ -51,6 +51,9 @@ public class PlayerTickContext {
         pieceGrounded = false;
         piecePlaced = false;
 
+    }
+
+    public void resetPiece() {
         moveContext.reset();
     }
 }

@@ -21,6 +21,11 @@ public class PlaceKey {
     }
 
     @Override
+    public String toString() {
+        return "spin: " + spin + ", lines: " + lines;
+    }
+
+    @Override
     public int hashCode() {
         return Objects.hash(spin, lines);
     }
