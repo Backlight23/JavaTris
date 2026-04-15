@@ -68,7 +68,7 @@ public class PlacementHandler implements PlayerHandler {
 
         var move = ctx.moveContext;
 
-        System.out.println("detectSpin called: rotated=" + move.rotated + " piece=" + piece.type);
+        //System.out.println("detectSpin called: rotated=" + move.rotated + " piece=" + piece.type);
 
         if (!move.rotated) {
             return SpinResult.NONE;
