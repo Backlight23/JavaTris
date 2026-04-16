@@ -47,6 +47,7 @@ public class SwingInputSource implements InputSource {
         bind(component, KeyEvent.VK_W);
         bind(component, KeyEvent.VK_Q);
         bind(component, KeyEvent.VK_E);
+        bind(component, KeyEvent.VK_F);
         bind(component, KeyEvent.VK_SHIFT);
         bind(component, KeyEvent.VK_C);
         bind(component, KeyEvent.VK_R);

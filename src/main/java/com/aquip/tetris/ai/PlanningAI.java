@@ -73,12 +73,19 @@ public class PlanningAI implements AIController {
             computeNewPlan(player, state);
         }
 
-        // Only consume the next input once enough ticks have elapsed.
         if (ticksSinceLastInput >= tickDelay) {
             GameInput next = inputQueue.poll();
+
             if (next != null) {
-                input.inputs = Set.of(next);
+                EnumSet<GameInput> actions = EnumSet.of(next);
+
+                if (isRotation(next) && inputQueue.peek() == GameInput.HARD_DROP) {
+                    actions.add(inputQueue.poll());
+                }
+
+                input.inputs = actions;
             }
+
             ticksSinceLastInput = 0;
         } else {
             ticksSinceLastInput++;
@@ -113,6 +120,20 @@ public class PlanningAI implements AIController {
 
     private String buildPlanKey(PlayerState playerState) {
         var piece = playerState.piece.currentPiece;
-        return piece.type + ":" + playerState.time.amount() + ":" + playerState.next.canHold + ":" + playerState.next.held;
+        return piece.type
+                + ":" + piece.x
+                + ":" + piece.y
+                + ":" + piece.rotation
+                + ":" + Arrays.deepHashCode(playerState.board.board)
+                + ":" + playerState.next.canHold
+                + ":" + playerState.next.held
+                + ":" + playerState.next.next.hashCode()
+                + ":" + playerState.garbage.totalLines();
+    }
+
+    private boolean isRotation(GameInput input) {
+        return input == GameInput.ROTATE_CW
+                || input == GameInput.ROTATE_CCW
+                || input == GameInput.ROTATE_180;
     }
 }

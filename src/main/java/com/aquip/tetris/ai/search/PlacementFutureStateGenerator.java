@@ -8,6 +8,7 @@ import com.aquip.tetris.piece.PieceRegistry;
 import com.aquip.tetris.piece.PieceType;
 import com.aquip.tetris.placement.PlaceKey;
 import com.aquip.tetris.placement.PlacementResult;
+import com.aquip.tetris.placement.SpinDetector;
 import com.aquip.tetris.placement.SpinResult;
 import com.aquip.tetris.player.Player;
 import com.aquip.tetris.state.B2BState;
@@ -86,11 +87,13 @@ public class PlacementFutureStateGenerator implements FutureStateGenerator {
         PlayerState simulatedPlayer = simulatedMatch.getPlayerState(player);
         PlayerState sourcePlayer = current.getPlayerState(player);
 
-        PlacementResult placement = placeCandidate(simulatedPlayer, candidate.finalPiece);
+        PlacementResult placement = placeCandidate(simulatedPlayer, candidate);
         updateCombo(simulatedPlayer, placement);
         updateBackToBack(simulatedPlayer, placement);
-        updateScore(simulatedPlayer, placement);
+        int scoreGained = updateScore(simulatedPlayer, placement);
         int garbageSent = resolveGarbage(simulatedMatch, simulatedPlayer, placement);
+        int comboDepth = simulatedPlayer.combo.amount();
+        int b2bDepth = simulatedPlayer.b2b.amount();
 
         simulateQueueAfterPlacement(simulatedPlayer, sourcePlayer, usedHold);
         applyPendingGarbage(simulatedPlayer);
@@ -109,16 +112,22 @@ public class PlacementFutureStateGenerator implements FutureStateGenerator {
                 simulatedMatch.players,
                 player.getId(),
                 plannedInputs,
+                placement,
                 placement.lines,
                 garbageSent,
+                scoreGained,
+                comboDepth,
+                b2bDepth,
                 usedHold
         );
     }
 
-    private PlacementResult placeCandidate(PlayerState playerState, Piece piece) {
+    private PlacementResult placeCandidate(PlayerState playerState, PlacementCandidate candidate) {
+        Piece piece = candidate.finalPiece;
         int[][] board = playerState.board.board;
         int[][] shape = registry.getRotation(piece.type, piece.rotation);
         int pieceValue = piece.type.ordinal() + 1;
+        SpinResult spin = SpinDetector.detectSpin(board, piece, candidate.endsInRotation);
 
         for (int y = 0; y < shape.length; y++) {
             for (int x = 0; x < shape[y].length; x++) {
@@ -139,7 +148,7 @@ public class PlacementFutureStateGenerator implements FutureStateGenerator {
 
         PlacementResult placement = new PlacementResult(
                 piece.type,
-                SpinResult.NONE,
+                spin,
                 piece.x,
                 piece.y,
                 piece.rotation,
@@ -171,7 +180,7 @@ public class PlacementFutureStateGenerator implements FutureStateGenerator {
         }
     }
 
-    private void updateScore(PlayerState playerState, PlacementResult placement) {
+    private int updateScore(PlayerState playerState, PlacementResult placement) {
         int baseScore = playerState.config.scoreTable == null
                 ? placement.lines * 100
                 : playerState.config.scoreTable.get(placement.getPlaceKey());
@@ -179,6 +188,7 @@ public class PlacementFutureStateGenerator implements FutureStateGenerator {
         double b2bMultiplier = playerState.b2b.amount() > 1 ? 1.5 : 1.0;
         int total = (int) ((baseScore + comboBonus) * b2bMultiplier * playerState.config.scoreMult);
         playerState.status.Score += total;
+        return total;
     }
 
     private int resolveGarbage(MatchState match, PlayerState attacker, PlacementResult placement) {
@@ -308,10 +318,12 @@ public class PlacementFutureStateGenerator implements FutureStateGenerator {
 
             Piece finalPiece = hardDrop(board, state.piece);
             String finalKey = pieceKey(finalPiece);
+            boolean endsInRotation = endsInRotation(state.inputs);
+            String candidateKey = finalKey + ":" + endsInRotation;
 
-            PlacementCandidate existing = candidates.get(finalKey);
+            PlacementCandidate existing = candidates.get(candidateKey);
             if (existing == null || state.inputs.size() < existing.inputs.size()) {
-                candidates.put(finalKey, new PlacementCandidate(finalPiece, state.inputs));
+                candidates.put(candidateKey, new PlacementCandidate(finalPiece, state.inputs, endsInRotation));
             }
 
             expand(frontier, visited, board, state, GameInput.MOVE_LEFT);
@@ -584,6 +596,17 @@ public class PlacementFutureStateGenerator implements FutureStateGenerator {
         return piece.type + ":" + rotation + ":" + piece.x + ":" + piece.y;
     }
 
+    private boolean endsInRotation(List<GameInput> inputs) {
+        if (inputs.isEmpty()) {
+            return false;
+        }
+
+        GameInput last = inputs.get(inputs.size() - 1);
+        return last == GameInput.ROTATE_CW
+                || last == GameInput.ROTATE_CCW
+                || last == GameInput.ROTATE_180;
+    }
+
     private static final class SearchState {
         private final Piece piece;
         private final List<GameInput> inputs;
@@ -597,10 +620,12 @@ public class PlacementFutureStateGenerator implements FutureStateGenerator {
     private static final class PlacementCandidate {
         private final Piece finalPiece;
         private final List<GameInput> inputs;
+        private final boolean endsInRotation;
 
-        private PlacementCandidate(Piece finalPiece, List<GameInput> inputs) {
+        private PlacementCandidate(Piece finalPiece, List<GameInput> inputs, boolean endsInRotation) {
             this.finalPiece = finalPiece;
             this.inputs = inputs;
+            this.endsInRotation = endsInRotation;
         }
     }
 }

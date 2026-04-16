@@ -11,18 +11,20 @@ public class ControlsRenderer {
         drawPanel(g, area, "Controls");
 
         g.setColor(Color.WHITE);
-        g.setFont(new Font("Monospaced", Font.PLAIN, 14));
+        int fontSize = Math.max(11, Math.min(14, Math.min(area.width / 10, area.height / 18)));
+        int lineHeight = fontSize + 10;
+        g.setFont(new Font("Monospaced", Font.PLAIN, fontSize));
 
         int x = area.x + 12;
-        int y = area.y + 38;
+        int y = area.y + 24 + lineHeight;
 
         if (state.player.getType() == PlayerType.AI) {
             g.drawString("Planning AI", x, y);
-            y += 24;
+            y += lineHeight;
             g.drawString("Searches placements", x, y);
-            y += 24;
+            y += lineHeight;
             g.drawString("Evaluates board risk", x, y);
-            y += 24;
+            y += lineHeight;
             g.drawString("Uses hold when useful", x, y);
             return;
         }
@@ -31,29 +33,29 @@ public class ControlsRenderer {
 
         if (playerTwo) {
             g.drawString("A / D         Move", x, y);
-            y += 24;
+            y += lineHeight;
             g.drawString("S             Soft drop", x, y);
-            y += 24;
-            g.drawString("Shift         Hard drop", x, y);
-            y += 24;
+            y += lineHeight;
+            g.drawString("Shift / F     Hard drop", x, y);
+            y += lineHeight;
             g.drawString("Q / W         Rotate", x, y);
-            y += 24;
+            y += lineHeight;
             g.drawString("E             Hold", x, y);
         } else {
             g.drawString("Left / Right  Move", x, y);
-            y += 24;
+            y += lineHeight;
             g.drawString("Down          Soft drop", x, y);
-            y += 24;
+            y += lineHeight;
             g.drawString("Space         Hard drop", x, y);
-            y += 24;
+            y += lineHeight;
             g.drawString("Z / X         Rotate", x, y);
-            y += 24;
+            y += lineHeight;
             g.drawString("C             Hold", x, y);
         }
 
-        y += 24;
+        y += lineHeight;
         g.drawString("Esc           Menu", x, y);
-        y += 24;
+        y += lineHeight;
         g.drawString("R / Enter     Restart", x, y);
     }
 

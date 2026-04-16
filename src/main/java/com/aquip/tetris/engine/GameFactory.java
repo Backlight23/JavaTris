@@ -25,13 +25,18 @@ public class GameFactory {
         matchState.seed = (int) System.currentTimeMillis();
 
         List<PlayerInputSource> inputSources = new ArrayList<>();
+        int humanIndex = 0;
 
         for (Player player : players) {
 
             PlayerInputSource source;
 
             if (player.getType() == PlayerType.HUMAN) {
-                source = new HumanInputSource(player);
+                ControlScheme scheme = humanIndex == 0
+                        ? ControlScheme.PLAYER_ONE
+                        : ControlScheme.PLAYER_TWO;
+                source = new HumanInputSource(player, scheme);
+                humanIndex++;
             } else {
                 source = new AIInputSource(player, new HeuristicAI(player, aiConfig));
             }

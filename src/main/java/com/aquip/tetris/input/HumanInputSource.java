@@ -8,6 +8,7 @@ import java.util.Set;
 public class HumanInputSource implements PlayerInputSource {
 
     private final Player player;
+    private final ControlScheme controlScheme;
 
     // --- DAS/ARR config ---
     private static final int DAS_DELAY = 10;
@@ -19,7 +20,12 @@ public class HumanInputSource implements PlayerInputSource {
     private int lastDirection = 0;
 
     public HumanInputSource(Player player) {
+        this(player, ControlScheme.PLAYER_ONE);
+    }
+
+    public HumanInputSource(Player player, ControlScheme controlScheme) {
         this.player = player;
+        this.controlScheme = controlScheme;
     }
 
     @Override
@@ -37,24 +43,24 @@ public class HumanInputSource implements PlayerInputSource {
         }
 
         // Edge-triggered actions
-        if (frame.pressed.contains(getKeyRotateCW())) {
+        if (isPressed(frame, getRotateCWKeys())) {
             inputs.add(GameInput.ROTATE_CW);
         }
 
-        if (frame.pressed.contains(getKeyRotateCCW())) {
+        if (isPressed(frame, getRotateCCWKeys())) {
             inputs.add(GameInput.ROTATE_CCW);
         }
 
-        if (frame.pressed.contains(getKeyHardDrop())) {
+        if (isPressed(frame, getHardDropKeys())) {
             inputs.add(GameInput.HARD_DROP);
         }
 
-        if (frame.pressed.contains(getKeyHold())) {
+        if (isPressed(frame, getHoldKeys())) {
             inputs.add(GameInput.HOLD_PIECE);
         }
 
         // Continuous action
-        if (frame.held.contains(getKeySoftDrop())) {
+        if (isHeld(frame, getSoftDropKeys())) {
             inputs.add(GameInput.SOFT_DROP);
         }
 
@@ -70,11 +76,11 @@ public class HumanInputSource implements PlayerInputSource {
     // ============================================
     private int handleHorizontal(InputFrame frame) {
 
-        boolean leftHeld = frame.held.contains(getKeyLeft());
-        boolean rightHeld = frame.held.contains(getKeyRight());
+        boolean leftHeld = isHeld(frame, getLeftKeys());
+        boolean rightHeld = isHeld(frame, getRightKeys());
 
-        boolean leftPressed = frame.pressed.contains(getKeyLeft());
-        boolean rightPressed = frame.pressed.contains(getKeyRight());
+        boolean leftPressed = isPressed(frame, getLeftKeys());
+        boolean rightPressed = isPressed(frame, getRightKeys());
 
         int direction = 0;
         if (leftHeld && !rightHeld) direction = -1;
@@ -123,39 +129,65 @@ public class HumanInputSource implements PlayerInputSource {
     // KEY MAPPING
     // ============================================
 
-    private int getKeyLeft() {
-        return playerIndex() == 0 ? KeyEvent.VK_LEFT : KeyEvent.VK_A;
+    private int[] getLeftKeys() {
+        return controlScheme == ControlScheme.PLAYER_ONE
+                ? new int[]{KeyEvent.VK_LEFT}
+                : new int[]{KeyEvent.VK_A};
     }
 
-    private int getKeyRight() {
-        return playerIndex() == 0 ? KeyEvent.VK_RIGHT : KeyEvent.VK_D;
+    private int[] getRightKeys() {
+        return controlScheme == ControlScheme.PLAYER_ONE
+                ? new int[]{KeyEvent.VK_RIGHT}
+                : new int[]{KeyEvent.VK_D};
     }
 
-    private int getKeySoftDrop() {
-        return playerIndex() == 0 ? KeyEvent.VK_DOWN : KeyEvent.VK_S;
+    private int[] getSoftDropKeys() {
+        return controlScheme == ControlScheme.PLAYER_ONE
+                ? new int[]{KeyEvent.VK_DOWN}
+                : new int[]{KeyEvent.VK_S};
     }
 
-    private int getKeyRotateCW() {
-        return playerIndex() == 0 ? KeyEvent.VK_X : KeyEvent.VK_W;
+    private int[] getRotateCWKeys() {
+        return controlScheme == ControlScheme.PLAYER_ONE
+                ? new int[]{KeyEvent.VK_X}
+                : new int[]{KeyEvent.VK_W};
     }
 
-    private int getKeyRotateCCW() {
-        return playerIndex() == 0 ? KeyEvent.VK_Z : KeyEvent.VK_Q;
+    private int[] getRotateCCWKeys() {
+        return controlScheme == ControlScheme.PLAYER_ONE
+                ? new int[]{KeyEvent.VK_Z}
+                : new int[]{KeyEvent.VK_Q};
     }
 
-    private int getKeyHardDrop() {
-        return playerIndex() == 0 ? KeyEvent.VK_SPACE : KeyEvent.VK_SHIFT;
+    private int[] getHardDropKeys() {
+        return controlScheme == ControlScheme.PLAYER_ONE
+                ? new int[]{KeyEvent.VK_SPACE}
+                : new int[]{KeyEvent.VK_SHIFT, KeyEvent.VK_F};
     }
 
-    private int getKeyHold() {
-        return playerIndex() == 0 ? KeyEvent.VK_C : KeyEvent.VK_E;
+    private int[] getHoldKeys() {
+        return controlScheme == ControlScheme.PLAYER_ONE
+                ? new int[]{KeyEvent.VK_C}
+                : new int[]{KeyEvent.VK_E};
     }
 
-    private int playerIndex() {
-        try {
-            return Integer.parseInt(player.getName().substring(1)) - 1;
-        } catch (Exception e) {
-            return 0;
+    private boolean isPressed(InputFrame frame, int[] keys) {
+        for (int key : keys) {
+            if (frame.pressed.contains(key)) {
+                return true;
+            }
         }
+
+        return false;
+    }
+
+    private boolean isHeld(InputFrame frame, int[] keys) {
+        for (int key : keys) {
+            if (frame.held.contains(key)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

@@ -1,6 +1,8 @@
 package com.aquip.tetris.ai.eval;
 
 import com.aquip.tetris.ai.search.PlannedMatchState;
+import com.aquip.tetris.placement.PlacementResult;
+import com.aquip.tetris.placement.SpinResult;
 import com.aquip.tetris.player.Player;
 import com.aquip.tetris.state.MatchState;
 import com.aquip.tetris.state.PlayerState;
@@ -29,21 +31,40 @@ public class HeuristicEvaluationFunction implements EvaluationFunction {
 
         int linesCleared = 0;
         int garbageSent = 0;
+        int scoreGained = 0;
+        int comboDepth = 0;
+        int b2bDepth = 0;
+        boolean usedHold = false;
+        PlacementResult placement = null;
 
         if (state instanceof PlannedMatchState planned && planned.plannerId().equals(player.getId())) {
             linesCleared = planned.linesCleared();
             garbageSent = planned.garbageSent();
+            scoreGained = planned.scoreGained();
+            comboDepth = planned.comboDepth();
+            b2bDepth = planned.b2bDepth();
+            usedHold = planned.usedHold();
+            placement = planned.placement();
         }
 
         score += linesCleared * 18.0;
         score += garbageSent * 22.0;
+        score += scoreGained * 0.04;
         score -= features.aggregateHeight * 0.48;
-        score -= features.holes * 17.0;
-        score -= features.bumpiness * 0.85;
-        score -= features.maxHeight * 1.45;
+        score -= features.holes * 19.0;
+        score -= features.bumpiness * 0.95;
+        score -= features.maxHeight * 1.70;
         score -= features.coveredCells * 0.30;
         score -= features.wellDepth * 0.18;
         score -= playerState.garbage.totalLines() * 6.0;
+
+        if (placement != null) {
+            if (placement.spin == SpinResult.T_SPIN) {
+                score += 30.0 + placement.lines * 12.0;
+            } else if (placement.spin == SpinResult.T_SPIN_MINI) {
+                score += 10.0 + placement.lines * 6.0;
+            }
+        }
 
         if (features.holes == 0) {
             score += 4.0;
@@ -51,6 +72,18 @@ public class HeuristicEvaluationFunction implements EvaluationFunction {
 
         if (linesCleared == 4) {
             score += 10.0;
+        }
+
+        if (b2bDepth > 1) {
+            score += 9.0;
+        }
+
+        if (comboDepth > 1) {
+            score += comboDepth * 3.5;
+        }
+
+        if (usedHold && (placement == null || placement.lines == 0)) {
+            score -= 1.5;
         }
 
         if (features.maxHeight >= playerState.board.getHeight() - 4) {

@@ -11,7 +11,8 @@ public class QueueRenderer {
         drawPanel(g, area, "Next");
 
         int i = 0;
-        int cardHeight = 56;
+        int availableHeight = Math.max(48, area.height - 34);
+        int cardHeight = Math.max(32, Math.min(56, availableHeight / Math.max(1, state.config.nextSize)));
 
         for (PieceType type : state.next.next) {
             if (i >= state.config.nextSize) break;

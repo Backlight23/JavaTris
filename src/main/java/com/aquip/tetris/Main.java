@@ -15,89 +15,87 @@ import java.awt.event.KeyEvent;
 
 public class Main {
 
-    public static void main(String[] args) {
+    private final JFrame frame = new JFrame("Tetris");
+    private final MenuPanel menuPanel = new MenuPanel();
+    private final GamePanel gamePanel = new GamePanel();
 
-        JFrame frame = new JFrame("Tetris");
+    private InputSource inputSource;
+    private MenuEngine menu;
+    private GameEngine game;
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> new Main().start());
+    }
+
+    private void start() {
         frame.setSize(1280, 720);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        MenuPanel menuPanel = new MenuPanel();
-        GamePanel gamePanel = new GamePanel();
-
         frame.setContentPane(menuPanel);
         frame.setVisible(true);
-        requestFocus(frame);
+        requestFocus();
 
-        // ONE input source
-        InputSource inputSource = new SwingInputSource(frame.getRootPane());
+        inputSource = new SwingInputSource(frame.getRootPane());
 
-        MenuEngine menu = new MenuEngine(
+        menu = new MenuEngine(
                 new File("config/config.yml"),
                 new MenuInputMapper()
         );
         menuPanel.setState(menu.state);
 
-        GameEngine game = null;
+        Timer timer = new Timer(16, e -> tick());
+        timer.setCoalesce(true);
+        timer.start();
+    }
 
-        while (true) {
+    private void tick() {
+        InputFrame inputFrame = inputSource.poll();
 
-            InputFrame inputFrame = inputSource.poll();
+        if (game == null) {
+            game = menu.update(inputFrame);
 
-            if (game == null) {
+            menuPanel.setState(menu.state);
+            menuPanel.repaint();
 
-                game = menu.update(inputFrame);
-
-                menuPanel.setState(menu.state);
-                menuPanel.repaint();
-
-                if (game != null) {
-                    gamePanel.setState(game.getMatchState());
-                    frame.setContentPane(gamePanel);
-                    frame.revalidate();
-                    frame.repaint();
-                    requestFocus(frame);
-                }
-
-            } else {
-
-                boolean gameOver = game.getMatchState().isGameOver();
-
-                if (gameOver &&
-                        (inputFrame.pressed.contains(KeyEvent.VK_R)
-                                || inputFrame.pressed.contains(KeyEvent.VK_ENTER))) {
-                    game = menu.createGame();
-                    gamePanel.setState(game.getMatchState());
-                    frame.setContentPane(gamePanel);
-                    frame.revalidate();
-                    frame.repaint();
-                    requestFocus(frame);
-                } else if (inputFrame.pressed.contains(KeyEvent.VK_ESCAPE)) {
-                    game = null;
-                    menu.showPlayMenu();
-                    frame.setContentPane(menuPanel);
-                    frame.revalidate();
-                    frame.repaint();
-                    requestFocus(frame);
-                } else if (gameOver) {
-                    gamePanel.setState(game.getMatchState());
-                    gamePanel.repaint();
-                } else {
-                    game.tick(inputFrame);
-
-                    gamePanel.setState(game.getMatchState());
-                    gamePanel.repaint();
-                }
+            if (game != null) {
+                showGame();
             }
+            return;
+        }
 
-            try {
-                Thread.sleep(16);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+        boolean gameOver = game.getMatchState().isGameOver();
+
+        if (gameOver &&
+                (inputFrame.pressed.contains(KeyEvent.VK_R)
+                        || inputFrame.pressed.contains(KeyEvent.VK_ENTER))) {
+            game = menu.createGame();
+            showGame();
+        } else if (inputFrame.pressed.contains(KeyEvent.VK_ESCAPE)) {
+            game = null;
+            menu.showPlayMenu();
+            frame.setContentPane(menuPanel);
+            frame.revalidate();
+            frame.repaint();
+            requestFocus();
+        } else if (gameOver) {
+            gamePanel.setState(game.getMatchState());
+            gamePanel.repaint();
+        } else {
+            game.tick(inputFrame);
+            gamePanel.setState(game.getMatchState());
+            gamePanel.repaint();
         }
     }
 
-    private static void requestFocus(JFrame frame) {
-        SwingUtilities.invokeLater(() -> frame.getRootPane().requestFocusInWindow());
+    private void showGame() {
+        gamePanel.setState(game.getMatchState());
+        frame.setContentPane(gamePanel);
+        frame.revalidate();
+        frame.repaint();
+        requestFocus();
+    }
+
+    private void requestFocus() {
+        frame.getRootPane().requestFocusInWindow();
     }
 }

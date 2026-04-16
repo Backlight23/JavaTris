@@ -19,6 +19,7 @@ public class PlayerRenderer {
     public void render(Graphics2D g, PlayerState state, Rectangle area) {
         int padding = area.width < 760 ? 16 : 24;
         int gap = area.width < 760 ? 12 : 20;
+        int columnGap = area.height < 460 ? 10 : 16;
 
         Rectangle contentArea = new Rectangle(
                 area.x + padding,
@@ -63,24 +64,35 @@ public class PlayerRenderer {
                 contentArea.height
         );
 
-        int holdHeight = area.width < 760 ? 104 : 120;
-        int controlsTop = holdHeight + 16;
-        int infoHeight = area.width < 760 ? 212 : 214;
-        int queueTop = infoHeight + 16;
+        int holdHeight = clamp(contentArea.height / 4, 84, area.width < 760 ? 104 : 120);
+        int minControlsHeight = area.width < 760 ? 132 : 168;
+        if (holdHeight + columnGap + minControlsHeight > contentArea.height) {
+            holdHeight = Math.max(68, contentArea.height - columnGap - minControlsHeight);
+        }
+        int controlsTop = holdHeight + columnGap;
+        int controlsHeight = Math.max(96, contentArea.height - controlsTop);
+
+        int infoHeight = clamp(contentArea.height / 3, area.width < 760 ? 132 : 156, area.width < 760 ? 176 : 214);
+        int minQueueHeight = area.width < 760 ? 96 : 120;
+        if (infoHeight + columnGap + minQueueHeight > contentArea.height) {
+            infoHeight = Math.max(112, contentArea.height - columnGap - minQueueHeight);
+        }
+        int queueTop = infoHeight + columnGap;
+        int queueHeight = Math.max(88, contentArea.height - queueTop);
 
         Rectangle holdArea = new Rectangle(leftColumn.x, leftColumn.y, leftColumn.width, holdHeight);
         Rectangle controlsArea = new Rectangle(
                 leftColumn.x,
                 leftColumn.y + controlsTop,
                 leftColumn.width,
-                Math.max(176, contentArea.height - controlsTop)
+                controlsHeight
         );
         Rectangle infoArea = new Rectangle(rightColumn.x, rightColumn.y, rightColumn.width, infoHeight);
         Rectangle queueArea = new Rectangle(
                 rightColumn.x,
                 rightColumn.y + queueTop,
                 rightColumn.width,
-                Math.max(120, contentArea.height - queueTop)
+                queueHeight
         );
 
         board.render(g, state, boardArea);
@@ -88,5 +100,9 @@ public class PlayerRenderer {
         controls.render(g, controlsArea, state);
         info.render(g, state, infoArea);
         queue.render(g, state, queueArea);
+    }
+
+    private int clamp(int value, int min, int max) {
+        return Math.max(min, Math.min(max, value));
     }
 }
