@@ -1,5 +1,6 @@
 package com.aquip.tetris;
 
+import com.aquip.tetris.ai.AIConfig;
 import com.aquip.tetris.ai.HeuristicAI;
 import com.aquip.tetris.engine.GameEngine;
 import com.aquip.tetris.engine.TickContext;
@@ -107,7 +108,10 @@ public final class VerificationSmoke {
         MatchState match = new MatchState();
         match.addPlayer(playerState);
 
-        HeuristicAI ai = new HeuristicAI(aiPlayer);
+        int delay = 0;
+        AIConfig aiConfig = new AIConfig(delay);
+
+        HeuristicAI ai = new HeuristicAI(aiPlayer, aiConfig);
         PlayerInput input = ai.decide(aiPlayer, match);
 
         require(input.inputs != null && !input.inputs.isEmpty(), "AI did not produce a planned input");

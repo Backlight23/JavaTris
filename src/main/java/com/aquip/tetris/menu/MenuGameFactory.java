@@ -1,5 +1,6 @@
 package com.aquip.tetris.menu;
 
+import com.aquip.tetris.ai.AIConfig;
 import com.aquip.tetris.engine.GameEngine;
 import com.aquip.tetris.engine.GameFactory;
 import com.aquip.tetris.player.Player;
@@ -10,13 +11,13 @@ import java.util.UUID;
 
 public class MenuGameFactory {
 
-    public static GameEngine createGame(ConfigState config) {
+    public static GameEngine createGame(ConfigState config, AIConfig aiConfig) {
         Player player = new Player(
                 UUID.randomUUID(),
                 PlayerType.HUMAN,
                 "P1"
         );
 
-        return GameFactory.createGame(java.util.List.of(player), config);
+        return GameFactory.createGame(java.util.List.of(player), config, aiConfig);
     }
 }

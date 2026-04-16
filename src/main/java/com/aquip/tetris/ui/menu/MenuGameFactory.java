@@ -1,5 +1,6 @@
 package com.aquip.tetris.ui.menu;
 
+import com.aquip.tetris.ai.AIConfig;
 import com.aquip.tetris.engine.GameEngine;
 import com.aquip.tetris.engine.GameFactory;
 import com.aquip.tetris.player.Player;
@@ -12,7 +13,7 @@ import java.util.UUID;
 
 public class MenuGameFactory {
 
-    public static GameEngine createGame(GameMode mode, ConfigState config) {
+    public static GameEngine createGame(GameMode mode, ConfigState config, AIConfig aiConfig) {
         List<Player> players = new ArrayList<>();
 
         switch (mode) {
@@ -28,7 +29,7 @@ public class MenuGameFactory {
             case AI_DEMO -> players.add(createPlayer(PlayerType.AI, "AI1"));
         }
 
-        return GameFactory.createGame(players, config);
+        return GameFactory.createGame(players, config, aiConfig);
     }
 
     private static Player createPlayer(PlayerType type, String name) {

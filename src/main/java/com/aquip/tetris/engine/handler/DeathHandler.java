@@ -35,7 +35,7 @@ public class DeathHandler {
                 }
             }
 
-            if (ctx.piecePlaced && hasLockedOut(player)) {
+            if (ctx.piecePlaced && checkSpawnCollision(player)) {
                 killPlayer(player, status, match.tick);
             }
         }

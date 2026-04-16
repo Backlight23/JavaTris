@@ -71,6 +71,6 @@ public class ConfigState {
     }
 
     public int softDropThresholdForPieces(int piecesPlaced) {
-        return Math.max(1, gravityThresholdForPieces(piecesPlaced) / 8);
+        return Math.max(1, gravityThresholdForPieces(piecesPlaced) / 16);
     }
 }

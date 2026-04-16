@@ -92,8 +92,8 @@ public class QueueHandler {
 
     private Piece createSpawnPiece(PlayerState player, PieceType type) {
 
-        int spawnX = player.config.boardWidth / 2 - 1;
-        int spawnY = 0;
+        int spawnX = player.config.boardWidth / 2 - 2;
+        int spawnY = 3;
 
         return new Piece(type, 0, spawnX, spawnY);
     }

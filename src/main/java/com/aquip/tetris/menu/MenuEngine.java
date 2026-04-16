@@ -1,5 +1,7 @@
 package com.aquip.tetris.menu;
 
+import com.aquip.tetris.ai.AIConfig;
+import com.aquip.tetris.config.AIConfigParser;
 import com.aquip.tetris.engine.GameEngine;
 import com.aquip.tetris.input.InputFrame;
 import com.aquip.tetris.state.ConfigState;
@@ -59,7 +61,8 @@ public class MenuEngine {
 
     public GameEngine createGame() {
         ConfigState config = GameConfigParser.parse(gameConfigFile);
-        return MenuGameFactory.createGame(config);
+        AIConfig aiConfig = AIConfigParser.parse(gameConfigFile);
+        return MenuGameFactory.createGame(config, aiConfig);
     }
 
     public void showPlayMenu() {

@@ -40,11 +40,13 @@ public class GarbageHandler {
             // =====================
             int garbage = attacker.config.garbageTable.get(key);
 
-            int comboBonus = Math.max(0, attacker.combo.amount() - 1);
-            garbage += comboBonus;
+            if (key.lines > 0) {
+                int comboBonus = Math.max(0, (attacker.combo.amount()) / 2);
+                garbage += comboBonus;
 
-            int b2bBonus = (attacker.b2b.amount() > 1) ? 1 : 0;
-            garbage += b2bBonus;
+                int b2bBonus = Math.min(4, attacker.b2b.amount());
+                garbage += b2bBonus;
+            }
 
             if (garbage <= 0) {
                 continue;

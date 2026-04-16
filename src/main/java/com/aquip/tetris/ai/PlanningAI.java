@@ -17,15 +17,34 @@ public class PlanningAI implements AIController {
     private final EvaluationFunction evaluator;
     private final InputPlanner planner;
 
+    /**
+     * How many ticks must pass between each input being sent.
+     * 0 = one input per tick (original behaviour).
+     * 1 = one input every 2 ticks, etc.
+     */
+    private final int tickDelay;
+    private int ticksSinceLastInput;
+
     private final Queue<GameInput> inputQueue = new ArrayDeque<>();
     private String currentPlanKey;
 
+    /** Convenience constructor – preserves original zero-delay behaviour. */
     public PlanningAI(FutureStateGenerator generator,
                       EvaluationFunction evaluator,
                       InputPlanner planner) {
+        this(generator, evaluator, planner, 0);
+    }
+
+    public PlanningAI(FutureStateGenerator generator,
+                      EvaluationFunction evaluator,
+                      InputPlanner planner,
+                      int tickDelay) {
+        if (tickDelay < 0) throw new IllegalArgumentException("tickDelay must be >= 0");
         this.generator = generator;
         this.evaluator = evaluator;
         this.planner = planner;
+        this.tickDelay = tickDelay;
+        this.ticksSinceLastInput = tickDelay; // ready to fire on tick 0
     }
 
     @Override
@@ -39,6 +58,7 @@ public class PlanningAI implements AIController {
         if (playerState == null || !playerState.status.alive || !playerState.piece.hasPiece()) {
             inputQueue.clear();
             currentPlanKey = null;
+            ticksSinceLastInput = tickDelay; // reset so we're ready on respawn
             return input;
         }
 
@@ -46,39 +66,36 @@ public class PlanningAI implements AIController {
         if (!planKey.equals(currentPlanKey)) {
             inputQueue.clear();
             currentPlanKey = planKey;
+            ticksSinceLastInput = tickDelay; // new piece → fire immediately
         }
 
-        // If we have no planned inputs, compute a new plan
         if (inputQueue.isEmpty()) {
             computeNewPlan(player, state);
         }
 
-        // Pop next input (or do nothing)
-        GameInput next = inputQueue.poll();
-
-        if (next != null) {
-            input.inputs = Set.of(next);
+        // Only consume the next input once enough ticks have elapsed.
+        if (ticksSinceLastInput >= tickDelay) {
+            GameInput next = inputQueue.poll();
+            if (next != null) {
+                input.inputs = Set.of(next);
+            }
+            ticksSinceLastInput = 0;
+        } else {
+            ticksSinceLastInput++;
         }
 
         return input;
     }
 
     private void computeNewPlan(Player player, MatchState state) {
-
-        MatchState current = state; // assumes this exists
-
-        // 1. Generate future states
-        List<MatchState> futures = generator.generate(current);
-
+        List<MatchState> futures = generator.generate(state);
         if (futures.isEmpty()) return;
 
-        // 2. Evaluate them
         MatchState bestState = null;
         double bestScore = Double.NEGATIVE_INFINITY;
 
         for (MatchState s : futures) {
             double score = evaluator.evaluate(s);
-
             if (score > bestScore) {
                 bestScore = score;
                 bestState = s;
@@ -87,9 +104,7 @@ public class PlanningAI implements AIController {
 
         if (bestState == null) return;
 
-        // 3. Plan inputs to reach best state
-        Queue<GameInput> plannedInputs = planner.plan(current, bestState);
-
+        Queue<GameInput> plannedInputs = planner.plan(state, bestState);
         if (plannedInputs != null) {
             inputQueue.clear();
             inputQueue.addAll(plannedInputs);

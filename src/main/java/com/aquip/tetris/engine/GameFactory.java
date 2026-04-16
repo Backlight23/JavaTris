@@ -1,5 +1,6 @@
 package com.aquip.tetris.engine;
 
+import com.aquip.tetris.ai.AIConfig;
 import com.aquip.tetris.ai.HeuristicAI;
 import com.aquip.tetris.engine.handler.*;
 import com.aquip.tetris.input.*;
@@ -17,7 +18,8 @@ import java.util.Queue;
 public class GameFactory {
 
     public static GameEngine createGame(List<Player> players,
-                                        ConfigState config) {
+                                        ConfigState config,
+                                        AIConfig aiConfig) {
 
         MatchState matchState = new MatchState();
         matchState.seed = (int) System.currentTimeMillis();
@@ -31,7 +33,7 @@ public class GameFactory {
             if (player.getType() == PlayerType.HUMAN) {
                 source = new HumanInputSource(player);
             } else {
-                source = new AIInputSource(player, new HeuristicAI(player));
+                source = new AIInputSource(player, new HeuristicAI(player, aiConfig));
             }
 
             inputSources.add(source);

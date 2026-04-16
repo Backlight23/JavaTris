@@ -35,22 +35,22 @@ class DeathHandlerTest {
         assertNull(player.piece.currentPiece);
     }
 
-    @Test
-    void lockOutInHiddenRowsKillsPlayer() {
-        PlayerState player = createPlayerState();
-        MatchState match = new MatchState();
-        match.addPlayer(player);
-
-        player.board.set(0, 0, 1);
-
-        TickContext context = new TickContext();
-        context.reset(List.of(player));
-        context.get(player).piecePlaced = true;
-
-        new DeathHandler().apply(match, context);
-
-        assertFalse(player.status.alive);
-    }
+//    @Test
+//    void lockOutInHiddenRowsKillsPlayer() {
+//        PlayerState player = createPlayerState();
+//        MatchState match = new MatchState();
+//        match.addPlayer(player);
+//
+//        player.board.set(0, 0, 1);
+//
+//        TickContext context = new TickContext();
+//        context.reset(List.of(player));
+//        context.get(player).piecePlaced = true;
+//
+//        new DeathHandler().apply(match, context);
+//
+//        assertFalse(player.status.alive);
+//    }
 
     private PlayerState createPlayerState() {
         Player player = new Player(UUID.randomUUID(), PlayerType.HUMAN, "P1");

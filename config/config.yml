@@ -84,3 +84,7 @@ clearTable:
     lines: 4
     score: 1000
     garbage: 8
+
+# AI settings
+ai:
+  tickDelay: 5    # ticks between each AI input; 0 = one input per tick
